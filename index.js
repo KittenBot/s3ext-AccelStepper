@@ -6,6 +6,12 @@ const BlockType = Scratch.BlockType;
 const formatMessage = Scratch.formatMessage;
 const log = Scratch.log;
 
+
+const acceleCommon = gen => {
+    gen.includes_['accele'] = '#include <AccelStepper.h>';
+};
+
+
 class AcceleStepper {
     constructor (runtime){
         this.runtime = runtime;
@@ -49,6 +55,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.stepper4
+                }
             },
             {
                 opcode: 'stepper2',
@@ -65,6 +74,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.stepper2
+                }
             },
             '---',
             {
@@ -81,6 +93,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.setmaxspeed
+                }
             },
             {
                 opcode: 'moveto',
@@ -96,6 +111,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.moveto
+                }
             },
             {
                 opcode: 'move',
@@ -111,6 +129,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.move
+                }
             },
             {
                 opcode: 'run',
@@ -122,6 +143,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.run
+                }
             },
             '---',
             {
@@ -138,6 +162,9 @@ class AcceleStepper {
                     }
                 },
                 func: 'noop',
+                gen: {
+                    arduino: this.runtonewpos
+                }
             },
             ],
             translation_map: {
@@ -153,9 +180,64 @@ class AcceleStepper {
     }
 
     noop (){
-
+    }
+    
+    stepper4 (gen, block){
+        acceleCommon(gen);
+        const stp = gen.parentVarDef(block);
+        const pin1 = gen.valueToCode(block, 'PIN1');
+        const pin2 = gen.valueToCode(block, 'PIN2');
+        const pin3 = gen.valueToCode(block, 'PIN3');
+        const pin4 = gen.valueToCode(block, 'PIN4');
+        gen.definitions_[`astep_${stp}`] = `AccelStepper astep_${stp}(4, ${pin1}, ${pin2}, ${pin3}, ${pin4});`;
     }
 
+    stepper2 (gen, block){
+        acceleCommon(gen);
+        const stp = gen.parentVarDef(block);
+        const pin1 = gen.valueToCode(block, 'PIN1');
+        const pin2 = gen.valueToCode(block, 'PIN2');
+        gen.definitions_[`astep_${stp}`] = `AccelStepper astep_${stp}(2, ${pin1}, ${pin2});`;
+    }
+    
+    setmaxspeed (gen, block){
+        acceleCommon(gen);
+        const stepper = gen.valueToCode(block, 'STEPPER');
+        const spd = gen.valueToCode(block, 'SPD');
+        const code = `astep_${stepper}.setMaxSpeed(${spd})`
+        return code;
+    }
+    
+    moveto (gen, block){
+        acceleCommon(gen);
+        const stepper = gen.valueToCode(block, 'STEPPER');
+        const pos = gen.valueToCode(block, 'POS');
+        const code = `astep_${stepper}.moveTo(${pos})`
+        return code;
+    }
+    
+    move (gen, block){
+        acceleCommon(gen);
+        const stepper = gen.valueToCode(block, 'STEPPER');
+        const pos = gen.valueToCode(block, 'POS');
+        const code = `astep_${stepper}.move(${pos})`
+        return code;
+    }
+    
+    run (gen, block){
+        acceleCommon(gen);
+        const stepper = gen.valueToCode(block, 'STEPPER');
+        const code = `astep_${stepper}.run()`
+        return code;
+    }
+    
+    runtonewpos (gen, block){
+        acceleCommon(gen);
+        const stepper = gen.valueToCode(block, 'STEPPER');
+        const pos = gen.valueToCode(block, 'POS');
+        const code = `astep_${stepper}.runToNewPosition(${pos})`
+        return code;
+    }
 }
 
 module.exports = AcceleStepper;
